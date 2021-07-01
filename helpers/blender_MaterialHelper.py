@@ -79,6 +79,8 @@ class MaterialHelper:
             "Object" : self.CurrentObject.name,
             "USDFile" : self.CurrentObject.name+".usda",
             "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            "Parent" : self.CurrentObject.parent if self.CurrentObject.parent !=None else "" ,
+            "Children" : [childs.name for childs in self.CurrentObject.children],
             
             
             "MaterialSlots":self.MaterialSlots                
@@ -201,6 +203,8 @@ class MaterialHelper:
         self.OutputDirectoryPath = OutputDirectoryPath
         # self.GetMaterialsFromObjects(selectedobejcts)
         for objectt in selectedobejcts:
+            self.OldDataName = objectt.data.name
+            objectt.data.name = "mesh_0"
             self.OldUVName = objectt.data.uv_layers[0].name
             objectt.data.uv_layers[0].name = "st"
             self.CurrentObject = objectt

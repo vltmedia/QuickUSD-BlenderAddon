@@ -4,5 +4,5 @@
         "titleBar.activeBackground": "#403338",
         "titleBar.activeForeground": "#FBFAFB"
     },
-    "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${appName} ${separator} [Branch: master]"
+    "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${appName} ${separator} [Branch: ExportChildren]"
 }
