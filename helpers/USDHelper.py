@@ -16,8 +16,16 @@ class USDHelper:
         self.usdStage = Usd.Stage.Open(filepath)
     
     def SelectPrimitive(self, PrimitivePath):
-        self.usdPrimitive =  self.usdStage.GetPrimAtPath(PrimitivePath)
+        cleanedprimpath = PrimitivePath.replace(".", "_")
+        self.usdPrimitive =  self.usdStage.GetPrimAtPath(cleanedprimpath)
         self.usdPrimitivePath = self.usdPrimitive.GetPath()
+        print("--------------------------------------------------")
+        print("--------------------------------------------------")
+        print("PrimitivePath | " , cleanedprimpath)
+        print("self.usdPrimitive | " , self.usdPrimitive)
+        print("usdPrimitivePath | " , self.usdPrimitivePath)
+        print("--------------------------------------------------")
+        print("--------------------------------------------------")
 
     def GetPrimitivePath(self):
         return self.usdPrimitivePath

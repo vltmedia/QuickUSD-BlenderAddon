@@ -186,6 +186,7 @@ class MaterialHelper:
         for filee in self.texturepaths:
             shutil.copy( filee, textureoutput)
         
+        self.SetSelectedObjectByName(objectt.name)
                 
         if self.ExportUSD_ == True:
             # Output USD File
@@ -206,7 +207,18 @@ class MaterialHelper:
                 self.AddChildren(child)    
             else:
                 self.AddObjectToObjectPaths(child.name, currentlayer ,currentlayer+ "/mesh_0")
-
+    
+    def SetSelectedObject(self):
+        bpy.ops.object.select_all(action='DESELECT') # Deselect all objects
+        bpy.context.view_layer.objects.active = self.CurrentObject   # Make the cube the active object 
+        self.CurrentObject.select_set(True) 
+            
+    def SetSelectedObjectByName(self, ObjectName):
+        objectt = bpy.data.objects[ObjectName]
+        bpy.ops.object.select_all(action='DESELECT') # Deselect all objects
+        bpy.context.view_layer.objects.active = objectt   # Make the cube the active object 
+        objectt.select_set(True) 
+        
     def RunApplyTextures(self, OutputDirectoryPath):
         # Run ApplyUSDTextures.py
         applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
