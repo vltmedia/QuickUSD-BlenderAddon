@@ -45,8 +45,8 @@ classes = (
     # Populate Child Panels in Order from Top to Bottom
 
 
-    QUSD_PT_nvidiaOmniverse,
-    QUSD_PT_nvidiaOmniverseFilepath,
+    # QUSD_PT_nvidiaOmniverse,
+    # QUSD_PT_nvidiaOmniverseFilepath,
     QUSD_PT_Preprocess,
     QUSD_PT_FixUV,
     QUSD_PT_Export

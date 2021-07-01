@@ -17,8 +17,8 @@ class PackageTextures(bpy.types.Operator):
         
         materialHelper = MaterialHelper()
         outputdir = '/'.join(quickusd_tool.outputdir.split('\\'))
-        materialHelper.ExportUSDA(outputdir, True)
-        #materialHelper.PackageTexturesToDirectory(outputdir)
+        # materialHelper.ExportUSDA(outputdir, True)
+        materialHelper.PackageTexturesToDirectory(outputdir)
         # Report "Hello World" to the Info Area
         print("ExportUSD")
         return {'FINISHED'}

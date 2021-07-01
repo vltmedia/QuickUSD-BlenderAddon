@@ -58,6 +58,18 @@ class QuickUSDProperties(PropertyGroup):
         default="",
         maxlen=2048,
         )
+    materialpath: StringProperty(
+        name="Material USD Path",
+        description="The Material USD Path",
+        default="/Looks/$OBJ",
+        maxlen=2048,
+        )
+    shaderpath: StringProperty(
+        name="Shader USD Path",
+        description="The Material Shader USD Path",
+        default="$MATERIALPATH/PBRShader",
+        maxlen=2048,
+        )
 
     textureoutputdir: StringProperty(
         name="Texture Output Directory",

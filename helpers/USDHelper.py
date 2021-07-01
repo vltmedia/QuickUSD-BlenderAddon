@@ -9,6 +9,9 @@ class USDHelper:
         self.CreatedMaterials = []
         self.CreatedPbrShaders = []
     
+    def Check(self):
+        print("USDHelper Loaded!")
+    
     def LoadUSDFile(self, filepath):
         self.usdStage = Usd.Stage.Open(filepath)
     
@@ -79,6 +82,9 @@ class USDHelper:
     def ApplyMaterialToPrimitive(self,MaterialPath, PrimitivePath):
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
         Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
+        
+        print("Prim Path :", PrimitivePath)
+        print("material Path :", MaterialPath)
         UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
     
     def ApplyCurrentMaterialAndPrimitive(self):

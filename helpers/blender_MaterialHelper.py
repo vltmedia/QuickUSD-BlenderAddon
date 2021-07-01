@@ -4,6 +4,7 @@ import bpy
 import os 
 import shutil
 import json
+import subprocess
 
 DiffuseArray = ["Diffuse","_dif","BaseColor","basecolor","Base_Color" ,"Color","diffuse" ]
 RoughnessArray = ["Rough","Roughness" ]
@@ -33,8 +34,13 @@ class MaterialHelper:
         self.DiscplacementTexture = ""
         
         self.MaterialSlots = []
+        self.ExportUSD_ = False
+        
         
     def CreateMaterialJson(self):
+        scene = bpy.context.scene
+        quickusd_tool = scene.quickusd_tool
+        materialpathh = quickusd_tool.materialpath.replace("$OBJ", self.currentMaterialName)
         # js = {
         #     "Name" : self.currentMaterialName,
         #     "Diffuse": self.DiffuseTexture,
@@ -52,6 +58,8 @@ class MaterialHelper:
         # }
         js = {
             "Name" : self.currentMaterialName,
+            "MaterialPath" : materialpathh ,
+            "ShaderPath" : quickusd_tool.shaderpath.replace("$MATERIALPATH", materialpathh) ,
             "Diffuse": os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.DiffuseTexture), self.ObjectOutputDirectory),
             "Roughness":os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.RoughnessTexture), self.ObjectOutputDirectory),
             "Normal":os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.NormalTexture), self.ObjectOutputDirectory) ,
@@ -65,8 +73,13 @@ class MaterialHelper:
             
             
         }
+
         self.MaterialSlots.append(js)
         self.MaterialJson = {
+            "Object" : self.CurrentObject.name,
+            "USDFile" : self.CurrentObject.name+".usda",
+            "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            
             
             "MaterialSlots":self.MaterialSlots                
                             
@@ -142,7 +155,9 @@ class MaterialHelper:
     def ExportUSDA(self, OutputDirectoryPath, PackageTextures):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
+        self.ExportUSD_ = True
         self.PackageTexturesToDirectory(OutputDirectoryPath )
+
         # bpy.ops.wm.usd_export(filepath=OutputDirectoryPath+ "/"++".usda", selected_objects_only=True, visible_objects_only=False)
         
     def ExportPackage(self,objectt, OutputDirectoryPath):
@@ -150,19 +165,34 @@ class MaterialHelper:
         quickusd_tool = scene.quickusd_tool
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
         
+        # Make Output Directory based on Object Name
         if not os.path.exists(OutputDirectoryPath):
             os.mkdir(OutputDirectoryPath)
-        
+        # Make Texture Output Directory based on Object Name
         if not os.path.exists(textureoutput):
             os.mkdir(textureoutput)
-        bpy.ops.wm.usd_export(filepath= OutputDirectoryPath+ "/"+objectt.name+".usda", selected_objects_only=True, visible_objects_only=False)
+
+        # Output MaterialJson File
         with open(OutputDirectoryPath + '/material.json', 'w') as outfile:
             json.dump(self.MaterialJson, outfile)
+            
         # Copy files to output directory
         for filee in self.texturepaths:
             shutil.copy( filee, textureoutput)
         
-    
+                
+        if self.ExportUSD_ == True:
+            # Output USD File
+            bpy.ops.wm.usd_export(filepath= OutputDirectoryPath+ "/"+objectt.name+".usda", selected_objects_only=True, visible_objects_only=False)
+            self.RunApplyTextures(OutputDirectoryPath)
+            
+        
+    def RunApplyTextures(self, OutputDirectoryPath):
+        # Run ApplyUSDTextures.py
+        applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
+        args = ["cmd.exe", "/c","python", applyusdpython, "--config",OutputDirectoryPath + '/material.json' ]
+        subprocess.run(args) 
+        
     def PackageTexturesToDirectory(self,OutputDirectoryPath):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
@@ -171,6 +201,7 @@ class MaterialHelper:
         self.OutputDirectoryPath = OutputDirectoryPath
         # self.GetMaterialsFromObjects(selectedobejcts)
         for objectt in selectedobejcts:
+            self.CurrentObject = objectt
             self.ObjectOutputDirectory = OutputDirectoryPath + '/' + objectt.name
             self.TextureOutputDirectory = self.ObjectOutputDirectory + '/' + '/'.join(quickusd_tool.textureoutputdir.split('\\'))
             self.GetMaterialsFromObject(objectt)
