@@ -229,6 +229,7 @@ class MaterialHelper:
         jsout = {
                 "Name":ObjectName,
                 "Path":ObjectPath,
+                "RelativePath":'/'+ObjectName+'/mesh_0',
                 "ObjectMeshPath":ObjectMeshPath
             }
         self.ObjectPaths['ObjectPaths'].append(jsout)
