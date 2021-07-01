@@ -81,7 +81,7 @@ class MaterialHelper:
             "USDFile" : self.CurrentObject.name+".usda",
             "Path" : self.GetMatchingDict(self.CurrentObject.name)['ObjectMeshPath'],
             # "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
-            "Parent" : self.CurrentObject.parent if self.CurrentObject.parent !=None else "" ,
+            "Parent" : self.CurrentObject.parent.name if self.CurrentObject.parent !=None else "" ,
             "Children" : [childs.name for childs in self.CurrentObject.children],
             "ChildrenPaths" : self.GetChildrenPaths(self.CurrentObject),
             
@@ -177,7 +177,7 @@ class MaterialHelper:
         # Make Texture Output Directory based on Object Name
         if not os.path.exists(textureoutput):
             os.mkdir(textureoutput)
-
+        print("OUT MAT | ", self.MaterialJson)
         # Output MaterialJson File
         with open(OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
             json.dump(self.MaterialJson, outfile)
@@ -198,7 +198,7 @@ class MaterialHelper:
             currentlayer = self.GetMatchingDict(ob.name)['Path'] + '/' +child.name
         # currentlayer =self.currentlayer+ "/" + ob.name
             self.currentlayer = currentlayer
-            # self.selectedobjects.append(child)
+            self.selectedobjects.append(child)
             if len(child.children) != 0:
                     
                 # child.name = ob.name + "_" + child.type
@@ -283,7 +283,8 @@ class MaterialHelper:
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
         self.OutputDirectoryPath = OutputDirectoryPath
         # self.GetMaterialsFromObjects(selectedobjects)
-        for objectt in selectedobjects:
+        for objectt in self.selectedobjects:
+        # for objectt in selectedobjects:
             self.OldDataName = objectt.data.name
             
             print("MATCHING PATH :: ", self.GetMatchingPath(objectt.name))
