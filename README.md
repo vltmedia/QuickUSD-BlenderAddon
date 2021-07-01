@@ -4,6 +4,8 @@ Use this Blender Addon to cleanly export meshes from Blender to separate .usda f
 
 ![images](images/QuickUSD_v0.3.0.png)
 
+[v0.3.0 Walkthrough Video](https://youtu.be/ghcS-naIF_U)
+
 # Requirements
 
 These are **HARD** requirements, otherwise Quick USD won't be able to apply the textures, only save out and package up the USD.
