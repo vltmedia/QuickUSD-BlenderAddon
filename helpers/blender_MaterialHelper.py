@@ -32,7 +32,7 @@ class MaterialHelper:
         self.AOTexture = ""
         self.EmissiveTexture = ""
         self.DiscplacementTexture = ""
-        
+        self.ObjectPaths = { "ObjectPaths" : []}
         self.MaterialSlots = []
         self.ExportUSD_ = False
         
@@ -74,27 +74,31 @@ class MaterialHelper:
             
         }
 
+        
         self.MaterialSlots.append(js)
         self.MaterialJson = {
             "Object" : self.CurrentObject.name,
             "USDFile" : self.CurrentObject.name+".usda",
-            "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            "Path" : self.GetMatchingDict(self.CurrentObject.name)['ObjectMeshPath'],
+            # "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
             "Parent" : self.CurrentObject.parent if self.CurrentObject.parent !=None else "" ,
             "Children" : [childs.name for childs in self.CurrentObject.children],
+            "ChildrenPaths" : self.GetChildrenPaths(self.CurrentObject),
             
             
-            "MaterialSlots":self.MaterialSlots                
+            "MaterialSlots":self.MaterialSlots            
+            # "ObjectPaths":self.ObjectPaths['ObjectPaths']                
                             
                             }
         
 
     def GetMaterialsFromObjects(self, ObjectsList):
         try:
-            selectedobejcts = ObjectsList
-            # selectedobejcts = bpy.context.selected_editable_objects
+            selectedobjects = ObjectsList
+            # selectedobjects = bpy.context.selected_editable_objects
             texturepaths = []
 
-            for f in selectedobejcts:
+            for f in selectedobjects:
                 
                 try:
                     pathss = self.GetMaterialPaths(f)
@@ -108,7 +112,7 @@ class MaterialHelper:
             print("Not Loaded Yet")
 
     def GetMaterialsFromObject(self, SourceObject):
-            # selectedobejcts = bpy.context.selected_editable_objects
+            # selectedobjects = bpy.context.selected_editable_objects
             texturepaths = []
 
                 
@@ -120,7 +124,7 @@ class MaterialHelper:
                 print("Failed",SourceObject)
             self.texturepaths = texturepaths
             print(texturepaths)
-          
+        
     def GetFullTexturePath(self,imageName):
         tex = bpy.data.images[imageName]
         full_path = bpy.path.abspath(tex.filepath, library=tex.library)
@@ -175,7 +179,7 @@ class MaterialHelper:
             os.mkdir(textureoutput)
 
         # Output MaterialJson File
-        with open(OutputDirectoryPath + '/material.json', 'w') as outfile:
+        with open(OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
             json.dump(self.MaterialJson, outfile)
             
         # Copy files to output directory
@@ -188,22 +192,101 @@ class MaterialHelper:
             bpy.ops.wm.usd_export(filepath= OutputDirectoryPath+ "/"+objectt.name+".usda", selected_objects_only=True, visible_objects_only=False)
             self.RunApplyTextures(OutputDirectoryPath)
             
-        
+    def AddChildren(self,ob):
+
+        for child in ob.children:
+            currentlayer = self.GetMatchingDict(ob.name)['Path'] + '/' +child.name
+        # currentlayer =self.currentlayer+ "/" + ob.name
+            self.currentlayer = currentlayer
+            # self.selectedobjects.append(child)
+            if len(child.children) != 0:
+                    
+                # child.name = ob.name + "_" + child.type
+                self.AddObjectToObjectPaths(child.name,currentlayer, currentlayer + "/mesh_0")
+                self.AddChildren(child)    
+            else:
+                self.AddObjectToObjectPaths(child.name, currentlayer ,currentlayer+ "/mesh_0")
+
     def RunApplyTextures(self, OutputDirectoryPath):
         # Run ApplyUSDTextures.py
         applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
-        args = ["cmd.exe", "/c","python", applyusdpython, "--config",OutputDirectoryPath + '/material.json' ]
+        args = ["cmd.exe", "/c","python", applyusdpython, "--config",OutputDirectoryPath + '/usdconfig.json' ]
         subprocess.run(args) 
+    
+    def AddObjectToObjectPaths(self, ObjectName, ObjectPath, ObjectMeshPath):
+        jsout = {
+                "Name":ObjectName,
+                "Path":ObjectPath,
+                "ObjectMeshPath":ObjectMeshPath
+            }
+        self.ObjectPaths['ObjectPaths'].append(jsout)
         
+    def AddBaseSelectedObjects(self):
+        for selobj in self.selectedobjects:
+            jsout = {
+                "Name":selobj.name,
+                "Path":"/"+selobj.name + "/" + selobj.data.name
+            }
+            self.AddObjectToObjectPaths(selobj.name,"/"+selobj.name, "/"+selobj.name + "/mesh_0")
+            self.currentlayer = "/"+selobj.name
+            self.AddChildren(selobj)
+            # self.AddObjectToObjectPaths(selobj.name, "/"+selobj.name + "/" + selobj.data.name)
+            # self.ObjectPaths['ObjectPaths'].append(jsout)
+            # self.ObjectPaths[selobj.name] = "/"+selobj.name + "/" + selobj.data.name
+            
+    
+    def GetMatchingPath(self, ObjectName):
+        selectedpath = ""
+        for objj in self.ObjectPaths['ObjectPaths']:
+            if objj['Name'] == ObjectName:
+                selectedpath = objj['Path']
+                return selectedpath
+                
+    def GetMatchingDict(self, ObjectName):
+        selectedpath = ""
+        for objj in self.ObjectPaths['ObjectPaths']:
+            if objj['Name'] == ObjectName:
+                return objj
+    
+    def GetChildrenPaths(self, ParentObject):
+        selectedpath = ""
+        childrenobjs = []
+        for objj in self.ObjectPaths['ObjectPaths']:
+            if ParentObject.name in objj['ObjectMeshPath']:
+                if objj['Name'] != ParentObject.name:
+                    childrenobjs.append(objj)
+        return childrenobjs
+                        
+            
     def PackageTexturesToDirectory(self,OutputDirectoryPath):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
-        selectedobejcts = bpy.context.selected_editable_objects
+        selectedobjects = bpy.context.selected_editable_objects
+        self.selectedobjects = bpy.context.selected_editable_objects
+        self.AddBaseSelectedObjects()
+        # for selobj in selectedobjects:
+        #     jsout = {
+        #         "Name":selobj.name,
+        #         "Path":"/"+selobj.name + "/" + selobj.data.name
+        #     }
+        #     self.AddObjectToObjectPaths(selobj.name, "/"+selobj.name + "/" + selobj.data.name)
+        #     # self.ObjectPaths['ObjectPaths'].append(jsout)
+        #     # self.ObjectPaths[selobj.name] = "/"+selobj.name + "/" + selobj.data.name
+        print ("---------------------------------------------------------------")
+        print ("---------------------------------------------------------------")
+        print ("---------------------------------------------------------------")
+        print ("self.ObjectPaths : ",self.ObjectPaths)
+        print ("---------------------------------------------------------------")
+        print ("---------------------------------------------------------------")
+        print ("---------------------------------------------------------------")
+        
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
         self.OutputDirectoryPath = OutputDirectoryPath
-        # self.GetMaterialsFromObjects(selectedobejcts)
-        for objectt in selectedobejcts:
+        # self.GetMaterialsFromObjects(selectedobjects)
+        for objectt in selectedobjects:
             self.OldDataName = objectt.data.name
+            
+            print("MATCHING PATH :: ", self.GetMatchingPath(objectt.name))
             objectt.data.name = "mesh_0"
             self.OldUVName = objectt.data.uv_layers[0].name
             objectt.data.uv_layers[0].name = "st"
@@ -215,7 +298,7 @@ class MaterialHelper:
             print("usda name : ", objectt.name)
             print("usda path : ", OutputDirectoryPath+ "/"+objectt.name+".usda")
             objectt.data.uv_layers[0].name = self.OldUVName
-        # self.ExportPackage(selectedobejcts[0], OutputDirectoryPath)
+        # self.ExportPackage(selectedobjects[0], OutputDirectoryPath)
         # Make directory if it doesn't exist.
         
             

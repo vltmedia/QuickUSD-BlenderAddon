@@ -24,7 +24,7 @@ my_parser.add_argument('--PrimitivePath', metavar='--primitivepath',  type=str, 
 # my_parser.add_argument('--Normal', metavar='--normal',  type=str, default="", help='Relative path to the Normal texture to apply.')
 # my_parser.add_argument('--Metallic', metavar='--metallic',  type=str, default="", help='Relative path to the Metallic texture to apply.')
 
-my_parser.add_argument('--MaterialConfig', metavar='--materialconfig',  type=str, default="", help='Material.json to use')
+my_parser.add_argument('--MaterialConfig', metavar='--materialconfig',  type=str, default="", help='usdconfig.json to use')
 
 # Execute the parse_args() method
 args = my_parser.parse_args()

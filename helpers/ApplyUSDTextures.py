@@ -1,4 +1,4 @@
-# python ApplyUSDTextures.py --config "C:\temp\usd\tex2\Window_ArchWithGlass\material.json"
+# python ApplyUSDTextures.py --config "C:\temp\usd\tex2\Window_ArchWithGlass\usdconfig.json"
 
 import pxr
 
@@ -15,7 +15,7 @@ usdHelper = USDHelper.USDHelper()
 usdHelper.Check()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config", help="Usually a material.json file with the Material Slots info",
+parser.add_argument("--config", help="Usually a usdconfig.json file with the Material Slots info",
                     type=str, default="")
 
 # Add the arguments
