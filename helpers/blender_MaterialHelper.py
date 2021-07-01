@@ -201,6 +201,8 @@ class MaterialHelper:
         self.OutputDirectoryPath = OutputDirectoryPath
         # self.GetMaterialsFromObjects(selectedobejcts)
         for objectt in selectedobejcts:
+            self.OldUVName = objectt.data.uv_layers[0].name
+            objectt.data.uv_layers[0].name = "st"
             self.CurrentObject = objectt
             self.ObjectOutputDirectory = OutputDirectoryPath + '/' + objectt.name
             self.TextureOutputDirectory = self.ObjectOutputDirectory + '/' + '/'.join(quickusd_tool.textureoutputdir.split('\\'))
@@ -208,6 +210,7 @@ class MaterialHelper:
             self.ExportPackage(objectt,self.ObjectOutputDirectory )
             print("usda name : ", objectt.name)
             print("usda path : ", OutputDirectoryPath+ "/"+objectt.name+".usda")
+            objectt.data.uv_layers[0].name = self.OldUVName
         # self.ExportPackage(selectedobejcts[0], OutputDirectoryPath)
         # Make directory if it doesn't exist.
         
