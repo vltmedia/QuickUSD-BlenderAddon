@@ -32,7 +32,18 @@ class MaterialHelper:
         self.AOTexture = ""
         self.EmissiveTexture = ""
         self.DiscplacementTexture = ""
-        
+        self.MaterialJson = {
+            "Object" : "",
+            "USDFile" : ""+".usda",
+            # "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            "Path" : "/geo/mesh_0",
+            "Parent" : "None",
+            "Children" : [],
+            
+            
+            "MaterialSlots":[]               
+                            
+                            }
         self.MaterialSlots = []
         self.ExportUSD_ = False
         
@@ -78,7 +89,10 @@ class MaterialHelper:
         self.MaterialJson = {
             "Object" : self.CurrentObject.name,
             "USDFile" : self.CurrentObject.name+".usda",
-            "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            # "Path" : "/"+self.CurrentObject.name + "/" + self.CurrentObject.data.name,
+            "Path" : "/"+self.CurrentObject.name + "/mesh_0",
+            "Parent" : self.CurrentObject.parent.name,
+            "Children" : [childs.name for childs in self.CurrentObject.children],
             
             
             "MaterialSlots":self.MaterialSlots                
@@ -174,6 +188,7 @@ class MaterialHelper:
 
         # Output MaterialJson File
         with open(OutputDirectoryPath + '/material.json', 'w') as outfile:
+            # print(self.MaterialJson)
             json.dump(self.MaterialJson, outfile)
             
         # Copy files to output directory
@@ -192,22 +207,48 @@ class MaterialHelper:
         applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
         args = ["cmd.exe", "/c","python", applyusdpython, "--config",OutputDirectoryPath + '/material.json' ]
         subprocess.run(args) 
+    
+    def SetSelectedObject(self):
+        bpy.ops.object.select_all(action='DESELECT') # Deselect all objects
+        bpy.context.view_layer.objects.active = self.CurrentObject   # Make the cube the active object 
+        self.CurrentObject.select_set(True)                          # Select the cube
+    
+    def AddChildren(self,ob):
+        for child in ob.children:
+            self.selectedobejcts.append(child)
+            # child.name = ob.name + "_" + child.type
+            self.AddChildren(child)
         
+    
+    def AddChildrenToSelectedObjects(self):
+        for objectt in self.selectedobejcts:
+            self.AddChildren(objectt)
+
+        
+            
     def PackageTexturesToDirectory(self,OutputDirectoryPath):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
         selectedobejcts = bpy.context.selected_editable_objects
+        self.selectedobejcts = selectedobejcts
+        # self.AddChildrenToSelectedObjects()
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
         self.OutputDirectoryPath = OutputDirectoryPath
         # self.GetMaterialsFromObjects(selectedobejcts)
+        
         for objectt in selectedobejcts:
+            self.OldDataName = objectt.data.name
+            objectt.data.name = "mesh_0"
             self.OldUVName = objectt.data.uv_layers[0].name
             objectt.data.uv_layers[0].name = "st"
             self.CurrentObject = objectt
+            self.SetSelectedObject()
             self.ObjectOutputDirectory = OutputDirectoryPath + '/' + objectt.name
             self.TextureOutputDirectory = self.ObjectOutputDirectory + '/' + '/'.join(quickusd_tool.textureoutputdir.split('\\'))
             self.GetMaterialsFromObject(objectt)
             self.ExportPackage(objectt,self.ObjectOutputDirectory )
+            objectt.data.name = self.OldDataName
+            
             print("usda name : ", objectt.name)
             print("usda path : ", OutputDirectoryPath+ "/"+objectt.name+".usda")
             objectt.data.uv_layers[0].name = self.OldUVName
