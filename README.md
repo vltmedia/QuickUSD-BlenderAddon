@@ -10,15 +10,20 @@ These are **HARD** requirements, otherwise Quick USD won't be able to apply the 
 
 <u>**YOU NEED TO HAVE USD INSTALLED FOR THE MAIN PYTHON ENVIRONMENT ON YOUR PC**</u>
 
-- Python 3.6.7 - **<u>REQUIRED FOR PYTHON USD</u>**
+- Python 3.6.7 - **<u>REQUIRED FOR PYTHON USD!</u>** Set as Main Python for PC through environment variables.
+
+  - Install PySide2 and PyOpenGL to python, e.g., ```python -m pip install PySide2 PyOpenGL```
 
 - USD Binaries installed
   - [Use & Install the Nvidia Prebuilt Binaries here for less headache](https://developer.nvidia.com/usd#bin)
 
 - Add %USDROOT%\bin and %USDROOT%\lib to the front of %PATH%
+
 - Add %USDROOT%\lib\python to the front of %PYTHONPATH%
-- Install PySide2 and PyOpenGL to python, e.g., ```python -m pip install PySide2 PyOpenGL```
-- ```usdcat.cmd %USDROOT%\share\usd\tutorials\convertingLayerFormats\Sphere.usd``` should return
+
+  
+
+  
 
 ### Test USD Install to Verify
 
