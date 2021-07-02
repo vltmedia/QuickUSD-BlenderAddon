@@ -2,6 +2,17 @@
 
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade
 import os
+
+class GetUSDParent:
+    def __init__(self):
+        self.loaded = True
+    def GetParentAtTop(self,CurrentObj):
+        if CurrentObj.GetParent().GetPath().pathString != "/":
+            self.GetParentAtTop(CurrentObj.GetParent())
+        else:
+            self.TopParent = CurrentObj
+
+
 class USDHelper:
 
     def __init__(self):
@@ -96,6 +107,13 @@ class USDHelper:
         for pathh in pathss:
             if "mesh_0" in pathh:
                 return pathh
+    
+    def GetTopParent(self, Obj):
+        gg = GetUSDParent()
+        gg.GetParentAtTop(Obj)
+        self.TopParent = gg.TopParent
+        return gg.TopParent
+        
                 
     def ApplyMaterialToPrimitive(self,MaterialPath, PrimitivePath):
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
@@ -106,7 +124,10 @@ class USDHelper:
         print("Prim Path :", PrimitivePath)
         print("material Path :", MaterialPath)
         if self.ObjectConfig["Parent"] == "":
+            print("1 ", Primitive_, self.GetTopParent(Primitive_))
+            
             UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+            self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
         else:
             if self.ObjectConfig["Parent"].replace(".","_") not in self.ObjectConfig['Path'].replace(".","_"):
                 print("self.ObjectConfig :", self.ObjectConfig)
@@ -116,10 +137,17 @@ class USDHelper:
                 
                 Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
                 print("Loaded PRim :", Primitive_)
+                print("GRANDPARENT :", Primitive_.GetParent())
+                print("GGRANDPARENT :", Primitive_.GetParent().GetParent())
+                print("2 ", Primitive_, self.GetTopParent(Primitive_))
                 
                 UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+                self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
+                # self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
             else:
+                print("3 ", Primitive_, self.GetTopParent(Primitive_))
                 UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+                self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
     
     def ApplyCurrentMaterialAndPrimitive(self):
         self.ApplyMaterialToPrimitive(self.CurrentmaterialPath, self.usdPrimitivePath)
