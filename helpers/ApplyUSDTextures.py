@@ -112,6 +112,9 @@ class QUSD_ApplyMaterial:
 "Object":self.MaterialData["Object"] ,   
 "USDFile":self.MaterialData["USDFile"] ,   
 "Path":self.MaterialData["Path"] ,   
+"Parent":self.MaterialData["Parent"] ,   
+"Children":self.MaterialData["Children"] ,   
+"ChildrenPaths":self.MaterialData["ChildrenPaths"] ,   
                 
                 }       
         self.MaterialData = tempdata
@@ -137,6 +140,7 @@ class QUSD_ApplyMaterial:
         print("--------------------------------------------------")
         print("--------------------------------------------------")
         usdHelper.LoadUSDFile(os.path.abspath(self.MaterialData["USDFile"]))
+        usdHelper.AddObjectConfig(self.MaterialData)
         usdHelper.SelectPrimitive(self.MaterialData["Path"])
         
         for mat in self.MaterialData["MaterialSlots"]:
@@ -163,6 +167,10 @@ class QUSD_ApplyMaterial:
         
 
 def ProcessMaterial():
+    print("--------------------------------------------------")
+    
+    print("ARGS TO ", args.config)
+    print("--------------------------------------------------")
     ApplyMaterial = QUSD_ApplyMaterial(args.config)
     
 if __name__ == '__main__':

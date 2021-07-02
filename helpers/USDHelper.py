@@ -26,7 +26,11 @@ class USDHelper:
         print("usdPrimitivePath | " , self.usdPrimitivePath)
         print("--------------------------------------------------")
         print("--------------------------------------------------")
-
+        
+        
+    def AddObjectConfig(self, ObjectConfig):
+        self.ObjectConfig = ObjectConfig
+        
     def GetPrimitivePath(self):
         return self.usdPrimitivePath
     
@@ -86,14 +90,36 @@ class USDHelper:
             self.SetTexture(self.CurrentmaterialPath+'/metallic',MetallicTexture,"metallic")
         # else:
             # self.Currentpbrshader.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.4)
-            
+    def FindMeshInScene(self):
+        pathss = [x.GetPath().pathString for x in self.usdStage.Traverse()]
+        chosenpath = ""
+        for pathh in pathss:
+            if "mesh_0" in pathh:
+                return pathh
+                
     def ApplyMaterialToPrimitive(self,MaterialPath, PrimitivePath):
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
-        Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
+        Primitive_ = self.usdStage.GetPrimAtPath(str(self.FindMeshInScene()).replace(".","_"))
+        # Primitive_ = self.usdStage.GetPrimAtPath(str(PrimitivePath).replace(".","_"))
+        # Primitive_ = self.usdStage.GetPrimAtPath(str(PrimitivePath).replace(".","_"))
         
         print("Prim Path :", PrimitivePath)
         print("material Path :", MaterialPath)
-        UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+        if self.ObjectConfig["Parent"] == "":
+            UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+        else:
+            if self.ObjectConfig["Parent"].replace(".","_") not in self.ObjectConfig['Path'].replace(".","_"):
+                print("self.ObjectConfig :", self.ObjectConfig)
+
+                PrimitivePath = '/'+ self.ObjectConfig["Parent"].replace(".","_")  + self.ObjectConfig['Path'].replace(".","_")
+                print("Prim Path :", PrimitivePath)
+                
+                Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
+                print("Loaded PRim :", Primitive_)
+                
+                UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
+            else:
+                UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
     
     def ApplyCurrentMaterialAndPrimitive(self):
         self.ApplyMaterialToPrimitive(self.CurrentmaterialPath, self.usdPrimitivePath)
