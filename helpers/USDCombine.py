@@ -97,13 +97,11 @@ class USDCombine:
             # print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
                     
         self.USDConfig['MaterialSlots'] = currentmaterials
-        for i in range(0,len(self.USDConfig['MaterialSlots']) - 1 ):
-            objss = self.GetObjectsContainingMaterial(self.USDConfig['Name'])
-            objss = self.GetObjectsContainingMaterial(self.USDConfig['Name'])
-            self.USDConfig['MaterialSlots']['Meshes'] = objss
-        
+        for i in range(0,len(self.USDConfig['MaterialSlots']) ):
+            objss = [n['Path'] for n in self.GetObjectsContainingMaterial(self.USDConfig['MaterialSlots'][i]['Name'])]
+            self.USDConfig['MaterialSlots'][i]['Meshes'] = objss
         # self.ApplyMaterialSlots()
-
+        print("yo")
             
 
 
