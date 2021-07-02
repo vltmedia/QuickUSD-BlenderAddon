@@ -31,7 +31,7 @@ class USDCombine:
     def CreateBaseUSDFile(self, filename):
         combinee = os.path.join(self.BaseFolder, filename)
         self.stage = Usd.Stage.CreateNew(combinee)
-
+        self.usdHelper.LoadUSDStage(self.stage)
     # def CleanMaterialSlots(self):
     #     currentmaterials = []
     #     currentmaterialsNames = []
@@ -52,7 +52,7 @@ class USDCombine:
                     matchingobjects.append( obj)
         return matchingobjects
     
-    def ApplyMaterialSlots(self, ApplyToObject):
+    def ApplyMaterialSlots(self):
         for mat in self.USDConfig['MaterialSlots']:
             materialslott = mat
             self.materialslott = mat
@@ -61,22 +61,27 @@ class USDCombine:
             self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"])
             # Apply Textures
             self.ApplyPBRTextures()
-            if ApplyToObject:
-                self.usdHelper.ApplyCurrentMaterialAndPrimitive()
+            for meshh in self.materialslott['Meshes']:
+            
+                currentmesh = self.usdHelper.FindMatchingMeshInScene(meshh)
+                print(currentmesh)
+                
+                self.usdHelper.HardApplyMaterialToPrimitive(self.materialslott["MaterialPath"],currentmesh)
+
         
         
     def ApplyPBRTextures(self):
         if os.path.exists(os.path.abspath(self.materialslott["Diffuse"]) ) or self.materialslott["Diffuse"] != "tex":
-            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"])
+            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"],True)
         if os.path.exists(os.path.abspath(self.materialslott["Roughness"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"])
+            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"],True)
         if os.path.exists(os.path.abspath(self.materialslott["Normal"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetNormalTexture(self.materialslott["Normal"])
+            self.usdHelper.SetNormalTexture(self.materialslott["Normal"],True)
         if os.path.exists(os.path.abspath(self.materialslott["Metal"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"])
+            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"],True)
                 
 
     def CleanMaterialSlots(self):
@@ -98,9 +103,9 @@ class USDCombine:
                     
         self.USDConfig['MaterialSlots'] = currentmaterials
         for i in range(0,len(self.USDConfig['MaterialSlots']) ):
-            objss = [n['Path'] for n in self.GetObjectsContainingMaterial(self.USDConfig['MaterialSlots'][i]['Name'])]
+            objss = [n['Path'].replace(".","_") for n in self.GetObjectsContainingMaterial(self.USDConfig['MaterialSlots'][i]['Name'])]
             self.USDConfig['MaterialSlots'][i]['Meshes'] = objss
-        # self.ApplyMaterialSlots()
+        self.ApplyMaterialSlots()
         print("yo")
             
 
@@ -153,13 +158,15 @@ def Test():
     parser = argparse.ArgumentParser()
     parser.add_argument("--directory", help="Directory to Process into one USD file.",
                         type=str, default="",required=False)
+    parser.add_argument("--out", help="The USDa filename to create and write the references to.",
+                        type=str, default="",required=False)
     args = parser.parse_args()
     
     
     usdCombine = USDCombine(args.directory)
     usdCombine.GetUSDAFiles()
     usdCombine.ReadJSONConfigs()
-    usdCombine.CreateBaseUSDFile("BuildingA.usda")
+    usdCombine.CreateBaseUSDFile(args.out)
     usdCombine.PopulateStage()
     usdCombine.CleanMaterialSlots()
     usdCombine.SaveJSONConfig()

@@ -81,26 +81,38 @@ class USDHelper:
         stInput.Set('st')
         self.stReader.CreateInput('varname',Sdf.ValueTypeNames.Token).ConnectToSource(stInput)
     
-    def SetDiffuseTexture(self, DiffuseTexture):
-        if os.path.exists(DiffuseTexture):
-            
+    def SetDiffuseTexture(self, DiffuseTexture, Force):
+        if Force:
             self.SetTexture(self.CurrentmaterialPath+'/diffuseColor',DiffuseTexture,"diffuseColor")
-    def SetRoughnessTexture(self, RoughnessTexture):
-        if os.path.exists(RoughnessTexture):
+        else:
+            if os.path.exists(DiffuseTexture):
+                self.SetTexture(self.CurrentmaterialPath+'/diffuseColor',DiffuseTexture,"diffuseColor")
+            
+    def SetRoughnessTexture(self, RoughnessTexture, Force):
+        if Force:
             self.SetTexture(self.CurrentmaterialPath+'/roughness',RoughnessTexture,"roughness")
         else:
-            self.Currentpbrshader.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.4)
+            if os.path.exists(RoughnessTexture):
+                self.SetTexture(self.CurrentmaterialPath+'/roughness',RoughnessTexture,"roughness")
+            else:
+                self.Currentpbrshader.CreateInput("roughness", Sdf.ValueTypeNames.Float).Set(0.4)
             
-    def SetNormalTexture(self, NormalTexture):
-        if os.path.exists(NormalTexture):
+    def SetNormalTexture(self, NormalTexture, Force):
+        if Force:
             self.SetTexture(self.CurrentmaterialPath+'/normal',NormalTexture,"normal")
+        else:
+            if os.path.exists(NormalTexture):
+                self.SetTexture(self.CurrentmaterialPath+'/normal',NormalTexture,"normal")
         # else:
         #     self.Currentpbrshader.CreateInput("diffuseColor", Sdf.ValueTypeNames.Float).Set(0.4)
             
                 
-    def SetMetallicTexture(self, MetallicTexture):
-        if os.path.exists(MetallicTexture):
+    def SetMetallicTexture(self, MetallicTexture, Force):
+        if Force:
             self.SetTexture(self.CurrentmaterialPath+'/metallic',MetallicTexture,"metallic")
+        else:
+            if os.path.exists(MetallicTexture):
+                self.SetTexture(self.CurrentmaterialPath+'/metallic',MetallicTexture,"metallic")
         # else:
             # self.Currentpbrshader.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.4)
     def FindMeshInScene(self):
@@ -109,6 +121,12 @@ class USDHelper:
         for pathh in pathss:
             if "mesh_0" in pathh:
                 return pathh
+    def FindMatchingMeshInScene(self, SourceString):
+        pathss = [x.GetPath().pathString for x in self.usdStage.Traverse()]
+        chosenpath = ""
+        for pathh in pathss:
+            if SourceString in pathh:
+                return pathh
     
     def GetTopParent(self, Obj):
         gg = GetUSDParent()
@@ -116,7 +134,11 @@ class USDHelper:
         self.TopParent = gg.TopParent
         return gg.TopParent
         
-                
+    def HardApplyMaterialToPrimitive(self,MaterialPath,PrimitivePath):
+        material = UsdShade.Material.Get(self.usdStage,MaterialPath)
+        Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath.replace(".","_"))
+        UsdShade.MaterialBindingAPI(Primitive_).Bind(material)  
+    
     def ApplyMaterialToPrimitive(self,MaterialPath, PrimitivePath):
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
         Primitive_ = self.usdStage.GetPrimAtPath(str(self.FindMeshInScene()).replace(".","_"))

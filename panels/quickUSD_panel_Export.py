@@ -13,11 +13,13 @@ class QUSD_PT_Export(QuickUSDTemplatePanel, bpy.types.Panel):
         quickusd_tool = scene.quickusd_tool
         layout.label(text="Export USD")
 
+        layout.prop(quickusd_tool, "outputmergedusdaname")
         layout.prop(quickusd_tool, "outputdir")
-        layout.prop(quickusd_tool, "enum_objectFlatten", text="") 
+        # layout.prop(quickusd_tool, "enum_objectFlatten", text="") 
+        layout.prop(quickusd_tool, "bool_mergereferences")
         layout.prop(quickusd_tool, "bool_openPostExport")
         layout.operator("wm.quickusd_packagetextures")
         layout.operator("wm.quickusd_exportusd")
-        layout.operator("wm.quickusd_openlastexportedusd")
+        # layout.operator("wm.quickusd_openlastexportedusd")
         
         layout.separator()

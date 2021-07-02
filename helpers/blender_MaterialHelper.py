@@ -34,6 +34,7 @@ class MaterialHelper:
         self.DiscplacementTexture = ""
         self.ObjectPaths = { "ObjectPaths" : []}
         self.MaterialSlots = []
+        self.ExportedUSDA = []
         self.ExportUSD_ = False
         self.USDConfig = {"Objects": []}
         
@@ -229,6 +230,9 @@ class MaterialHelper:
         # Make Texture Output Directory based on Object Name
         if not os.path.exists(textureoutput):
             os.mkdir(textureoutput)
+        # Make Texture Output Directory based on Object Name
+        if not os.path.exists(self.BaseTexOutputDirectoryPath):
+            os.mkdir(self.BaseTexOutputDirectoryPath)
         print("OUT MAT | ", self.MaterialJson)
         # Output MaterialJson File
         with open(OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
@@ -238,6 +242,9 @@ class MaterialHelper:
         # Copy files to output directory
         for filee in self.texturepaths:
             shutil.copy( filee, textureoutput)
+        # Copy files to output directory
+        for filee in self.texturepaths:
+            shutil.copy( filee, self.BaseTexOutputDirectoryPath)
         
         self.SetSelectedObjectByName(objectt.name)
                 
@@ -245,6 +252,8 @@ class MaterialHelper:
             # Output USD File
             bpy.ops.wm.usd_export(filepath= OutputDirectoryPath+ "/"+objectt.name+".usda", selected_objects_only=True, visible_objects_only=False)
             self.RunApplyTextures(OutputDirectoryPath)
+            self.ExportedUSDA.append(OutputDirectoryPath+ "/"+objectt.name+".usda")
+            
             
     def AddChildren(self,ob):
 
@@ -274,9 +283,24 @@ class MaterialHelper:
         
     def RunApplyTextures(self, OutputDirectoryPath):
         # Run ApplyUSDTextures.py
+        # applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
         applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
         args = ["cmd.exe", "/c","python", applyusdpython, "--config",OutputDirectoryPath + '/usdconfig.json' ]
         subprocess.run(args) 
+            
+    def RunUSDCombineReferences(self, OutputDirectoryPath):
+        scene = bpy.context.scene
+        quickusd_tool = scene.quickusd_tool
+        self.ExportedUSDA.append(OutputDirectoryPath + "/" + quickusd_tool.outputmergedusdaname)
+        # Run ApplyUSDTextures.py
+        # applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/ApplyUSDTextures.py"
+        applyusdpython = os.path.dirname(os.path.realpath(__file__)) + "/USDCombine.py"
+        args = ["cmd.exe", "/c","python", applyusdpython, "--directory",OutputDirectoryPath, "--out", quickusd_tool.outputmergedusdaname ]
+        subprocess.run(args) 
+                
+    def OpenUSDInViewer(self, USDfilepath):
+        args = ["cmd.exe", "/c","usdview.cmd", USDfilepath ]
+        subprocess.Popen(args) 
     
     def AddObjectToObjectPaths(self, ObjectName, ObjectPath, ObjectMeshPath):
         jsout = {
@@ -348,6 +372,8 @@ class MaterialHelper:
         
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
         self.OutputDirectoryPath = OutputDirectoryPath
+        self.BaseOutputDirectoryPath = OutputDirectoryPath
+        self.BaseTexOutputDirectoryPath = OutputDirectoryPath + "/tex"
         # self.GetMaterialsFromObjects(selectedobjects)
         for objectt in self.selectedobjects:
         # for objectt in selectedobjects:
@@ -368,6 +394,13 @@ class MaterialHelper:
         # self.ExportPackage(selectedobjects[0], OutputDirectoryPath)
         # Make directory if it doesn't exist.
         self.SaveGroupUSDConfig()
+        
+        if quickusd_tool.bool_mergereferences:
+            self.RunUSDCombineReferences(self.BaseOutputDirectoryPath)
+            
+        if quickusd_tool.bool_openPostExport:
+            for filee in self.ExportedUSDA:
+                self.OpenUSDInViewer(filee)
         
             
             

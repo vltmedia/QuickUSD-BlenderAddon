@@ -166,16 +166,16 @@ class QUSD_ApplyMaterial:
         
     def ApplyPBRTextures(self):
         if os.path.exists(os.path.abspath(self.materialslott["Diffuse"]) ) or self.materialslott["Diffuse"] != "tex":
-            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"])
+            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"], False)
         if os.path.exists(os.path.abspath(self.materialslott["Roughness"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"])
+            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"], False)
         if os.path.exists(os.path.abspath(self.materialslott["Normal"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetNormalTexture(self.materialslott["Normal"])
+            self.usdHelper.SetNormalTexture(self.materialslott["Normal"], False)
         if os.path.exists(os.path.abspath(self.materialslott["Metal"])) or self.materialslott["Diffuse"] != "tex":
             
-            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"])
+            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"], False)
     
     def CreateMaterial(self, MaterialPath, ShaderPath):
         self.Materials.append(self.usdHelper.CreateNewMaterial(MaterialPath,ShaderPath))

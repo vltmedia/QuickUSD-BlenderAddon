@@ -27,6 +27,11 @@ class QuickUSDProperties(PropertyGroup):
         description="Open the saved out USD(s) in USDView after exporting",
         default = False
         )
+    bool_mergereferences: BoolProperty(
+        name="Merge .usda To File",
+        description="Merge all the selected objects'.usda into a single .usda importing them as references.",
+        default = True
+        )
 
     # my_int: IntProperty(
     #     name = "Int Value",
@@ -52,6 +57,12 @@ class QuickUSDProperties(PropertyGroup):
     #     max = 0.1
     # ) 
 
+    outputmergedusdaname: StringProperty(
+        name="Merged .usda Name",
+        description="The filename of the USDA that will hold all the USD created. Use this for Layout work.",
+        default="merged.usda",
+        maxlen=2048,
+        )
     outputdir: StringProperty(
         name="Output Directory",
         description="Output Directory of the USD file(s)",

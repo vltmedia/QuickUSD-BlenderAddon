@@ -10,7 +10,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--directory","C:/temp/usd/t4"],
+            "args": ["--directory","C:/temp/usd/t4", "--out", "USDTESTING"],
             "console": "integratedTerminal"
         }
     ]
