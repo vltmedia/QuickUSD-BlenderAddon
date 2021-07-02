@@ -24,8 +24,10 @@ class USDHelper:
         print("USDHelper Loaded!")
     
     def LoadUSDFile(self, filepath):
-        self.usdStage = Usd.Stage.Open(filepath)
-    
+        self.usdStage = Usd.Stage.Open(filepath)    
+    def LoadUSDStage(self, stage):
+        self.usdStage = stage
+        
     def SelectPrimitive(self, PrimitivePath):
         cleanedprimpath = PrimitivePath.replace(".", "_")
         self.usdPrimitive =  self.usdStage.GetPrimAtPath(cleanedprimpath)
@@ -223,6 +225,7 @@ class USDHelper:
         
         # Connect Shader to Material
         material.CreateSurfaceOutput().ConnectToSource(pbrShader.ConnectableAPI(), "surface")
+        return material
 
 
 

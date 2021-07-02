@@ -11,32 +11,33 @@ import USDHelper
 
 import argparse
 
-usdHelper = USDHelper.USDHelper()
-usdHelper.Check()
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--config", help="Usually a usdconfig.json file with the Material Slots info",
-                    type=str, default="")
-
-# Add the arguments
-
-args = parser.parse_args()
-
-print(args.config)
-
-currentdir = os.path.dirname(args.config) 
-print("currentdir", currentdir)
-os.chdir(currentdir)
 
 
 class QUSD_ApplyMaterial:
 
-    def __init__(self, MaterialConfig):
-        self.MaterialConfig = MaterialConfig
+    def __init__(self):
+            
+        self.usdHelper = USDHelper.self.usdHelper()
+        self.usdHelper.Check()
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--config", help="Usually a usdconfig.json file with the Material Slots info",
+                            type=str, default="")
+
+        # Add the arguments
+
+        args = parser.parse_args()
+
+        print(args.config)
+
+        currentdir = os.path.dirname(args.config) 
+        print("currentdir", currentdir)
+        os.chdir(currentdir)
+        self.MaterialConfig = args.config
         self.LoadMaterialConfig()
         self.ReadMaterialData()
         self.CleanupPaths()
-        self.ProcessUSD()
+        self.Materials = []
 
     def LoadMaterialConfig(self):
         with open(self.MaterialConfig) as f:
@@ -125,7 +126,10 @@ class QUSD_ApplyMaterial:
         diffusee = os.path.relpath(os.path.abspath(self.MaterialData["MaterialSlots"][0]["Diffuse"]), os.getcwd())
         print(diffusee)
         
-        
+    def LoadStage(self, stage):
+        self.usdHelper.LoadUSDStage(stage)
+    def LoadMaterialUSD(self):
+        self.usdHelper.LoadUSDFile(os.path.abspath(self.MaterialData["USDFile"]))
     def ProcessUSD(self):
         print("--------------------------------------------------")
         print("--------------------------------------------------")
@@ -139,39 +143,57 @@ class QUSD_ApplyMaterial:
         print("--------------------------------------------------")
         print("--------------------------------------------------")
         print("--------------------------------------------------")
-        usdHelper.LoadUSDFile(os.path.abspath(self.MaterialData["USDFile"]))
-        usdHelper.AddObjectConfig(self.MaterialData)
-        usdHelper.SelectPrimitive(self.MaterialData["Path"])
         
+        self.usdHelper.AddObjectConfig(self.MaterialData)
+        self.usdHelper.SelectPrimitive(self.MaterialData["Path"])
+        self.ApplyMaterialSlots(True)
+        
+        
+
+            
+    def ApplyMaterialSlots(self, ApplyToObject):
         for mat in self.MaterialData["MaterialSlots"]:
             materialslott = mat
+            self.materialslott = mat
             print("Material Slot :", materialslott)
-            usdHelper.CreateNewMaterial(materialslott["MaterialPath"],materialslott["ShaderPath"])
-            
+            # self.usdHelper.CreateNewMaterial(materialslott["MaterialPath"],materialslott["ShaderPath"])
+            self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"])
             # Apply Textures
-            if os.path.exists(os.path.abspath(materialslott["Diffuse"]) ) or materialslott["Diffuse"] != "tex":
-                usdHelper.SetDiffuseTexture(materialslott["Diffuse"])
-            if os.path.exists(os.path.abspath(materialslott["Roughness"])) or materialslott["Diffuse"] != "tex":
-                
-                usdHelper.SetRoughnessTexture(materialslott["Roughness"])
-            if os.path.exists(os.path.abspath(materialslott["Normal"])) or materialslott["Diffuse"] != "tex":
-                
-                usdHelper.SetNormalTexture(materialslott["Normal"])
-            if os.path.exists(os.path.abspath(materialslott["Metal"])) or materialslott["Diffuse"] != "tex":
-                
-                usdHelper.SetMetallicTexture(materialslott["Metal"])
-                usdHelper.ApplyCurrentMaterialAndPrimitive()
+            self.ApplyPBRTextures()
+            if ApplyToObject:
+                self.self.usdHelper.ApplyCurrentMaterialAndPrimitive()
         
-        usdHelper.Save()
+        
+    def ApplyPBRTextures(self):
+        if os.path.exists(os.path.abspath(self.materialslott["Diffuse"]) ) or self.materialslott["Diffuse"] != "tex":
+            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"])
+        if os.path.exists(os.path.abspath(self.materialslott["Roughness"])) or self.materialslott["Diffuse"] != "tex":
             
+            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"])
+        if os.path.exists(os.path.abspath(self.materialslott["Normal"])) or self.materialslott["Diffuse"] != "tex":
+            
+            self.usdHelper.SetNormalTexture(self.materialslott["Normal"])
+        if os.path.exists(os.path.abspath(self.materialslott["Metal"])) or self.materialslott["Diffuse"] != "tex":
+            
+            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"])
+    
+    def CreateMaterial(self, MaterialPath, ShaderPath):
+        self.Materials.append(self.usdHelper.CreateNewMaterial(MaterialPath,ShaderPath))
+        
+        #self.usdHelper.Save()
+    def SaveUSD(self):
+        self.usdHelper.Save()        
         
 
 def ProcessMaterial():
-    print("--------------------------------------------------")
     
-    print("ARGS TO ", args.config)
-    print("--------------------------------------------------")
-    ApplyMaterial = QUSD_ApplyMaterial(args.config)
+   
+    ApplyMaterial = QUSD_ApplyMaterial()
+    # ApplyMaterial.LoadStage()
+    ApplyMaterial.LoadMaterialUSD()
+    ApplyMaterial.ProcessUSD()
+    ApplyMaterial.SaveUSD()
+    
     
 if __name__ == '__main__':
     ProcessMaterial()

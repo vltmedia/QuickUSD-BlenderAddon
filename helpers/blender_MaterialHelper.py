@@ -35,6 +35,7 @@ class MaterialHelper:
         self.ObjectPaths = { "ObjectPaths" : []}
         self.MaterialSlots = []
         self.ExportUSD_ = False
+        self.USDConfig = {"Objects": []}
         
         
     def CreateMaterialJson(self):
@@ -142,6 +143,7 @@ class MaterialHelper:
         for mat_slot in ObjectMesh.material_slots:
             if mat_slot.material:
                 if mat_slot.material.node_tree:
+                    self.MaterialSlots = []
                     self.currentMaterialName = mat_slot.material.name
                     self.texturepathss =  [x for x in mat_slot.material.node_tree.nodes if x.type=='TEX_IMAGE']
                     
@@ -165,7 +167,35 @@ class MaterialHelper:
         self.PackageTexturesToDirectory(OutputDirectoryPath )
 
         # bpy.ops.wm.usd_export(filepath=OutputDirectoryPath+ "/"++".usda", selected_objects_only=True, visible_objects_only=False)
+    
+    def SaveGroupUSDConfig(self):
+        scene = bpy.context.scene
+        quickusd_tool = scene.quickusd_tool
+        self.CleanMaterialSlots()
+        materialpathh = quickusd_tool.materialpath.replace("$OBJ", self.currentMaterialName) 
+        self.USDConfig["MaterialPath"] = materialpathh
+        self.USDConfig["ShaderPath"] =quickusd_tool.shaderpath.replace("$MATERIALPATH", materialpathh) 
+        with open(self.OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
+            json.dump( self.USDConfig, outfile, indent = 4)
+    def CleanMaterialSlots(self):
+        currentmaterials = []
+        currentmaterialsNames = []
         
+        # Get Material Names
+        for obj in self.USDConfig['Objects']:
+            print("OBJJJ " , obj)
+            for mat in obj['MaterialSlots']:
+                
+                if mat['Name'] not in currentmaterialsNames:
+                    currentmaterialsNames.append(mat['Name'])
+                    currentmaterials.append(mat)
+                    
+        # Set Material Slots inside of each object to the cleane dup material slot
+        for i in range(0,len(self.USDConfig['Objects']) - 1 ):
+            self.USDConfig['Objects'][i]['MaterialSlots'] = currentmaterials  
+            print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
+                    
+        self.USDConfig['MaterialSlots'] = currentmaterials    
     def ExportPackage(self,objectt, OutputDirectoryPath):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
@@ -181,7 +211,8 @@ class MaterialHelper:
         # Output MaterialJson File
         with open(OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
             json.dump(self.MaterialJson, outfile)
-            
+        self.USDConfig['Objects'].append(self.MaterialJson)
+        
         # Copy files to output directory
         for filee in self.texturepaths:
             shutil.copy( filee, textureoutput)
@@ -314,6 +345,7 @@ class MaterialHelper:
             objectt.data.uv_layers[0].name = self.OldUVName
         # self.ExportPackage(selectedobjects[0], OutputDirectoryPath)
         # Make directory if it doesn't exist.
+        self.SaveGroupUSDConfig()
         
             
             
