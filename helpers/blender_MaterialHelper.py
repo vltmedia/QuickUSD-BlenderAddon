@@ -167,7 +167,13 @@ class MaterialHelper:
         self.PackageTexturesToDirectory(OutputDirectoryPath )
 
         # bpy.ops.wm.usd_export(filepath=OutputDirectoryPath+ "/"++".usda", selected_objects_only=True, visible_objects_only=False)
-    
+    def GetObjectsContainingMaterial(self, MaterialName):
+        matchingobjects = []
+        for obj in self.USDConfig['Objects']:
+            for mat in obj["MaterialSlots"]:
+                if MaterialName in mat['Name']:
+                    matchingobjects.append( obj)
+        return matchingobjects
     def SaveGroupUSDConfig(self):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
@@ -177,6 +183,8 @@ class MaterialHelper:
         self.USDConfig["ShaderPath"] =quickusd_tool.shaderpath.replace("$MATERIALPATH", materialpathh) 
         with open(self.OutputDirectoryPath + '/usdconfig.json', 'w') as outfile:
             json.dump( self.USDConfig, outfile, indent = 4)
+    
+    
     def CleanMaterialSlots(self):
         currentmaterials = []
         currentmaterialsNames = []
@@ -189,13 +197,27 @@ class MaterialHelper:
                 if mat['Name'] not in currentmaterialsNames:
                     currentmaterialsNames.append(mat['Name'])
                     currentmaterials.append(mat)
+
                     
         # Set Material Slots inside of each object to the cleane dup material slot
         for i in range(0,len(self.USDConfig['Objects']) - 1 ):
             self.USDConfig['Objects'][i]['MaterialSlots'] = currentmaterials  
             print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
+
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # for i in range(0,len(currentmaterials)  ):
+        #     currentchoice = self.GetObjectsContainingMaterial(currentmaterials[i]['Name'])
+        #     print("GET OBJECTS : ", currentchoice)
+        #     self.USDConfig['MaterialSlots'][i]['Meshes'] = currentchoice
                     
-        self.USDConfig['MaterialSlots'] = currentmaterials    
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        
+        
+        # self.USDConfig['MaterialSlots'] = currentmaterials   
+         
     def ExportPackage(self,objectt, OutputDirectoryPath):
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool

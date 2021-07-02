@@ -17,7 +17,7 @@ class QUSD_ApplyMaterial:
 
     def __init__(self):
             
-        self.usdHelper = USDHelper.self.usdHelper()
+        self.usdHelper = USDHelper.USDHelper()
         self.usdHelper.Check()
 
         parser = argparse.ArgumentParser()
@@ -161,7 +161,7 @@ class QUSD_ApplyMaterial:
             # Apply Textures
             self.ApplyPBRTextures()
             if ApplyToObject:
-                self.self.usdHelper.ApplyCurrentMaterialAndPrimitive()
+                self.usdHelper.ApplyCurrentMaterialAndPrimitive()
         
         
     def ApplyPBRTextures(self):

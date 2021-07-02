@@ -1,23 +1,33 @@
 import glob
 import os
+import sys
 from pxr import Gf, Kind, Sdf, Usd, UsdGeom, UsdShade
 import json
+import argparse
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from ApplyUSDTextures import QUSD_ApplyMaterial
+import USDHelper
 
 
 class USDCombine:
 
-    def __init__(self,BaseFolder):
+    def __init__(self, BaseFolder):
+        self.usdHelper = USDHelper.USDHelper()
+        self.usdHelper.Check()
         self.BaseFolder = BaseFolder
-        self.USDConfigPath = os.path.join(BaseFolder, "usdconfig.json")
+        self.USDConfigPath = os.path.join(self.BaseFolder, "usdconfig.json")
         self.References = []
+        self.Materials = []
         self.USDConfig = {"Objects": []}
         
     def GetUSDAFiles(self):
         self.USDFiles = glob.glob(self.BaseFolder+'/**/*.usda')
         self.USDConfigJSONs = [os.path.dirname( configs) + '/usdconfig.json'  for configs in self.USDFiles]
-
+    
+    def CreateMaterial(self, MaterialPath, ShaderPath):
+        self.Materials.append(self.usdHelper.CreateNewMaterial(MaterialPath,ShaderPath))
+        
     def CreateBaseUSDFile(self, filename):
         combinee = os.path.join(self.BaseFolder, filename)
         self.stage = Usd.Stage.CreateNew(combinee)
@@ -33,7 +43,41 @@ class USDCombine:
     #                 currentmaterialsNames.append(mat['Name'])
     #                 currentmaterials.append(mat)
     #     self.USDConfig['MaterialSlots'] = currentmaterials
+    
+    def GetObjectsContainingMaterial(self, MaterialName):
+        matchingobjects = []
+        for obj in self.USDConfig['Objects']:
+            for mat in obj["MaterialSlots"]:
+                if MaterialName in mat['Name']:
+                    matchingobjects.append( obj)
+        return matchingobjects
+    
+    def ApplyMaterialSlots(self, ApplyToObject):
+        for mat in self.USDConfig['MaterialSlots']:
+            materialslott = mat
+            self.materialslott = mat
+            print("Material Slot :", materialslott)
+            # self.usdHelper.CreateNewMaterial(materialslott["MaterialPath"],materialslott["ShaderPath"])
+            self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"])
+            # Apply Textures
+            self.ApplyPBRTextures()
+            if ApplyToObject:
+                self.usdHelper.ApplyCurrentMaterialAndPrimitive()
+        
+        
+    def ApplyPBRTextures(self):
+        if os.path.exists(os.path.abspath(self.materialslott["Diffuse"]) ) or self.materialslott["Diffuse"] != "tex":
+            self.usdHelper.SetDiffuseTexture(self.materialslott["Diffuse"])
+        if os.path.exists(os.path.abspath(self.materialslott["Roughness"])) or self.materialslott["Diffuse"] != "tex":
             
+            self.usdHelper.SetRoughnessTexture(self.materialslott["Roughness"])
+        if os.path.exists(os.path.abspath(self.materialslott["Normal"])) or self.materialslott["Diffuse"] != "tex":
+            
+            self.usdHelper.SetNormalTexture(self.materialslott["Normal"])
+        if os.path.exists(os.path.abspath(self.materialslott["Metal"])) or self.materialslott["Diffuse"] != "tex":
+            
+            self.usdHelper.SetMetallicTexture(self.materialslott["Metal"])
+                
 
     def CleanMaterialSlots(self):
         currentmaterials = []
@@ -50,9 +94,16 @@ class USDCombine:
         # Set Material Slots inside of each object to the cleane dup material slot
         for i in range(0,len(self.USDConfig['Objects']) - 1 ):
             self.USDConfig['Objects'][i]['MaterialSlots'] = currentmaterials  
-            print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
+            # print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
                     
         self.USDConfig['MaterialSlots'] = currentmaterials
+        for i in range(0,len(self.USDConfig['MaterialSlots']) - 1 ):
+            objss = self.GetObjectsContainingMaterial(self.USDConfig['Name'])
+            objss = self.GetObjectsContainingMaterial(self.USDConfig['Name'])
+            self.USDConfig['MaterialSlots']['Meshes'] = objss
+        
+        # self.ApplyMaterialSlots()
+
             
 
 
@@ -93,20 +144,26 @@ class USDCombine:
             splitt = matchedobj['Path'].split("/")[len(matchedobj['Path'].split("/")) - 1]
             cleanedpath = matchedobj['Path'].replace(splitt, "")[:-1]
             cleanedpath = '/'+matchedobj['Path'].split("/")[1]
+            print(matchedobj["MaterialSlots"])
             self.AddReferenceToStage(relname,cleanedpath)
-            print("primpath", matchedobj['Path'])
-            print("relname", relname)
-            print("cleanedpath", cleanedpath)
+            # print("primpath", matchedobj['Path'])
+            # print("relname", cleanedpath)
+            # print("cleanedpath", cleanedpath)
 
 def Test():
-    usdCombine = USDCombine("C:/temp/usd/t4")
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--directory", help="Directory to Process into one USD file.",
+                        type=str, default="",required=False)
+    args = parser.parse_args()
+    
+    
+    usdCombine = USDCombine(args.directory)
     usdCombine.GetUSDAFiles()
     usdCombine.ReadJSONConfigs()
     usdCombine.CreateBaseUSDFile("BuildingA.usda")
     usdCombine.PopulateStage()
     usdCombine.CleanMaterialSlots()
-    
-    print("Cleaned Materials ", usdCombine.USDConfig['MaterialSlots'])
     usdCombine.SaveJSONConfig()
     usdCombine.SaveUSDStage()
     
