@@ -5,7 +5,7 @@ import os
 import shutil
 import json
 import subprocess
-
+from helpers.CenterObject import BlenderHelper_CenterObject
 DiffuseArray = ["Diffuse","_dif","BaseColor","basecolor","Base_Color" ,"Color","diffuse" ]
 RoughnessArray = ["Rough","Roughness" ]
 NormalArray = ["Normal","_n","norm" ]
@@ -37,7 +37,15 @@ class MaterialHelper:
         self.ExportedUSDA = []
         self.ExportUSD_ = False
         self.USDConfig = {"Objects": []}
+        self.BH_CenterObject = BlenderHelper_CenterObject()
         
+    def CenterObject(self):
+        scene = bpy.context.scene
+        quickusd_tool = scene.quickusd_tool
+        self.BH_CenterObject.CenterObject(self.CurrentObject,quickusd_tool.bool_SnapToFloor)
+        
+    def ResetObject(self):
+        self.BH_CenterObject.ResetObject()
         
     def CreateMaterialJson(self):
         scene = bpy.context.scene
@@ -60,8 +68,8 @@ class MaterialHelper:
         # }
         js = {
             "Name" : self.currentMaterialName,
-            "MaterialPath" : materialpathh ,
-            "ShaderPath" : quickusd_tool.shaderpath.replace("$MATERIALPATH", materialpathh) ,
+            "MaterialPath" : materialpathh.replace(".", "_") ,
+            "ShaderPath" : quickusd_tool.shaderpath.replace("$MATERIALPATH", materialpathh).replace(".", "_") ,
             "Diffuse": os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.DiffuseTexture), self.ObjectOutputDirectory),
             "Roughness":os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.RoughnessTexture), self.ObjectOutputDirectory),
             "Normal":os.path.relpath(os.path.abspath(self.TextureOutputDirectory + "/" +self.NormalTexture), self.ObjectOutputDirectory) ,
@@ -157,8 +165,8 @@ class MaterialHelper:
                     self.CreateMaterialJson()
                     textures.extend([x for x in mat_slot.material.node_tree.nodes if x.type=='TEX_IMAGE'])
                     # textures.extend([x for x in mat_slot.material.node_tree.nodes if x.type=='TEX_IMAGE'])
-        print("textures", textures)
-        print("texturepaths", texturepaths)
+        # print("textures", textures)
+        # print("texturepaths", texturepaths)
         return texturepaths
     
     def ExportUSDA(self, OutputDirectoryPath, PackageTextures):
@@ -192,7 +200,7 @@ class MaterialHelper:
         
         # Get Material Names
         for obj in self.USDConfig['Objects']:
-            print("OBJJJ " , obj)
+            # print("OBJJJ " , obj)
             for mat in obj['MaterialSlots']:
                 
                 if mat['Name'] not in currentmaterialsNames:
@@ -203,7 +211,7 @@ class MaterialHelper:
         # Set Material Slots inside of each object to the cleane dup material slot
         for i in range(0,len(self.USDConfig['Objects']) - 1 ):
             self.USDConfig['Objects'][i]['MaterialSlots'] = currentmaterials  
-            print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
+            # print("UPDATED CLEAN : ", self.USDConfig['Objects'][i]['MaterialSlots'])
 
         # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -223,6 +231,7 @@ class MaterialHelper:
         scene = bpy.context.scene
         quickusd_tool = scene.quickusd_tool
         textureoutput =OutputDirectoryPath +  '/'.join(quickusd_tool.textureoutputdir.split('\\'))
+        
         
         # Make Output Directory based on Object Name
         if not os.path.exists(OutputDirectoryPath):
@@ -249,10 +258,19 @@ class MaterialHelper:
         self.SetSelectedObjectByName(objectt.name)
                 
         if self.ExportUSD_ == True:
+            # Center Object
+            if quickusd_tool.bool_CenterObject:
+                self.CenterObject()
+
+            
             # Output USD File
             bpy.ops.wm.usd_export(filepath= OutputDirectoryPath+ "/"+objectt.name+".usda", selected_objects_only=True, visible_objects_only=False)
             self.RunApplyTextures(OutputDirectoryPath)
             self.ExportedUSDA.append(OutputDirectoryPath+ "/"+objectt.name+".usda")
+            
+            if quickusd_tool.bool_CenterObject:
+            # Reset Position of object and origin
+                self.ResetObject()
             
             
     def AddChildren(self,ob):
@@ -269,7 +287,39 @@ class MaterialHelper:
                 self.AddChildren(child)    
             else:
                 self.AddObjectToObjectPaths(child.name, currentlayer ,currentlayer+ "/mesh_0")
-    
+                
+    def CenterOrigin(self,SnapToFloor):
+        #Get active object    
+        act_obj = bpy.context.active_object
+            
+        #Get cursor
+        cursor = bpy.context.scene.cursor
+
+        #Get original cursor location
+        self.original_cursor_location = (cursor.location[0], cursor.location[1], cursor.location[2])   
+
+        #Make sure origin is set to geometry for cursor z move 
+        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')  
+
+        #Set cursor location to object location
+        cursor.location = act_obj.location
+        if SnapToFloor:
+            #Get cursor z move  
+            half_act_obj_z_dim = act_obj.dimensions[2] / 2
+            cursor_z_move = cursor.location[2] - half_act_obj_z_dim   
+            
+            #Move cursor to bottom of object
+            cursor.location[2] = cursor_z_move
+
+        #Set origin to cursor
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+        
+        #Assuming you're wanting object center to grid
+        bpy.ops.object.location_clear(clear_delta=False)
+        #bpy.ops.object.origin_clear()
+
+
+                    
     def SetSelectedObject(self):
         bpy.ops.object.select_all(action='DESELECT') # Deselect all objects
         bpy.context.view_layer.objects.active = self.CurrentObject   # Make the cube the active object 
@@ -312,6 +362,8 @@ class MaterialHelper:
         self.ObjectPaths['ObjectPaths'].append(jsout)
         
     def AddBaseSelectedObjects(self):
+        scene = bpy.context.scene
+        quickusd_tool = scene.quickusd_tool
         for selobj in self.selectedobjects:
             jsout = {
                 "Name":selobj.name,
@@ -319,7 +371,8 @@ class MaterialHelper:
             }
             self.AddObjectToObjectPaths(selobj.name,"/"+selobj.name, "/"+selobj.name + "/mesh_0")
             self.currentlayer = "/"+selobj.name
-            self.AddChildren(selobj)
+            if quickusd_tool.bool_ExportHierarchy:
+                self.AddChildren(selobj)
             # self.AddObjectToObjectPaths(selobj.name, "/"+selobj.name + "/" + selobj.data.name)
             # self.ObjectPaths['ObjectPaths'].append(jsout)
             # self.ObjectPaths[selobj.name] = "/"+selobj.name + "/" + selobj.data.name
@@ -407,10 +460,10 @@ class MaterialHelper:
     def GetTextureType(self, filename):
         
         try:
-            print("GetTextureType A ")
-            print("GetTextureType filename ", filename)
+            # print("GetTextureType A ")
+            # print("GetTextureType filename ", filename)
             SourceCheck = os.path.basename( filename.lower())
-            print("GetTextureType SourceCheck ", SourceCheck)
+            # print("GetTextureType SourceCheck ", SourceCheck)
 
             for CompareString in NormalArray:
                 if CompareString.lower() in SourceCheck:

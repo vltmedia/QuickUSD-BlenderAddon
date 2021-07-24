@@ -58,7 +58,7 @@ class USDCombine:
             self.materialslott = mat
             print("Material Slot :", materialslott)
             # self.usdHelper.CreateNewMaterial(materialslott["MaterialPath"],materialslott["ShaderPath"])
-            self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"])
+            self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"].replace(".", "_"))
             # Apply Textures
             self.ApplyPBRTextures()
             for meshh in self.materialslott['Meshes']:

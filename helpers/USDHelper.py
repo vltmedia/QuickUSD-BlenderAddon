@@ -7,10 +7,14 @@ class GetUSDParent:
     def __init__(self):
         self.loaded = True
     def GetParentAtTop(self,CurrentObj):
-        if CurrentObj.GetParent().GetPath().pathString != "/":
-            self.GetParentAtTop(CurrentObj.GetParent())
-        else:
-            self.TopParent = CurrentObj
+        try:
+            if CurrentObj.GetParent().GetPath().pathString != "/":
+                self.GetParentAtTop(CurrentObj.GetParent())
+            else:
+                self.TopParent = CurrentObj
+        except:
+            print("Ye")
+            # self.TopParent = CurrentObj
 
 
 class USDHelper:
@@ -115,12 +119,13 @@ class USDHelper:
                 self.SetTexture(self.CurrentmaterialPath+'/metallic',MetallicTexture,"metallic")
         # else:
             # self.Currentpbrshader.CreateInput("metallic", Sdf.ValueTypeNames.Float).Set(0.4)
-    def FindMeshInScene(self):
-        pathss = [x.GetPath().pathString for x in self.usdStage.Traverse()]
-        chosenpath = ""
-        for pathh in pathss:
-            if "mesh_0" in pathh:
-                return pathh
+    # def FindMeshInScene(self):
+    #     pathss = [x.GetPath().pathString for x in self.usdStage.Traverse()]
+    #     chosenpath = ""
+    #     for pathh in pathss:
+    #         if "mesh_0" in pathh:
+    #             return pathh
+            
     def FindMatchingMeshInScene(self, SourceString):
         pathss = [x.GetPath().pathString for x in self.usdStage.Traverse()]
         chosenpath = ""
@@ -138,38 +143,59 @@ class USDHelper:
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
         Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath.replace(".","_"))
         UsdShade.MaterialBindingAPI(Primitive_).Bind(material)  
-    
+            
+    def FindMeshInScene(self, MatchingTerm):
+        # def FindMeshInScene():
+        pathss = [x for x in self.usdStage.Traverse()]
+        chosenpath = ""
+        for pathh in pathss:
+            if "mesh_0" in pathh.GetPath().pathString:
+                if MatchingTerm in  pathh.GetPath().pathString:
+                    return pathh
+                # gg = GetUSDParent()
+                # gg.GetParentAtTop(pathh)
+                # p = gg.TopParent
+                # print(p)
+                # print(pathh.GetPath().pathString)
+                # return pathh
+                    
     def ApplyMaterialToPrimitive(self,MaterialPath, PrimitivePath):
         material = UsdShade.Material.Get(self.usdStage,MaterialPath)
-        Primitive_ = self.usdStage.GetPrimAtPath(str(self.FindMeshInScene()).replace(".","_"))
+        currentmeshh = self.FindMeshInScene(self.ObjectConfig["Object"])
+        currentmeshhPath = currentmeshh.GetPath().pathString.replace(".","_")
+        print("Current Mesh", currentmeshh)
+        print("Current Mesh Path", currentmeshhPath)
+        Primitive_ = self.usdStage.GetPrimAtPath(currentmeshhPath)
         # Primitive_ = self.usdStage.GetPrimAtPath(str(PrimitivePath).replace(".","_"))
         # Primitive_ = self.usdStage.GetPrimAtPath(str(PrimitivePath).replace(".","_"))
         
+        print("Primitive_ :", Primitive_)
         print("Prim Path :", PrimitivePath)
         print("material Path :", MaterialPath)
         if self.ObjectConfig["Parent"] == "":
-            print("1 ", Primitive_, self.GetTopParent(Primitive_))
+            # print("1 ", Primitive_, self.GetTopParent(Primitive_))
             
             UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
             self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
         else:
             if self.ObjectConfig["Parent"].replace(".","_") not in self.ObjectConfig['Path'].replace(".","_"):
-                print("self.ObjectConfig :", self.ObjectConfig)
+                # print("self.ObjectConfig :", self.ObjectConfig)
 
                 PrimitivePath = '/'+ self.ObjectConfig["Parent"].replace(".","_")  + self.ObjectConfig['Path'].replace(".","_")
                 print("Prim Path :", PrimitivePath)
                 
-                Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
+                Primitive_ = self.FindMeshInScene(self.ObjectConfig["Object"])
+                # Primitive_ = self.usdStage.GetPrimAtPath(PrimitivePath)
                 print("Loaded PRim :", Primitive_)
-                print("GRANDPARENT :", Primitive_.GetParent())
-                print("GGRANDPARENT :", Primitive_.GetParent().GetParent())
-                print("2 ", Primitive_, self.GetTopParent(Primitive_))
+                # print("GRANDPARENT :", Primitive_.GetParent())
+                # print("GGRANDPARENT :", Primitive_.GetParent().GetParent())
+                # print("2 ", Primitive_, self.GetTopParent(Primitive_))
                 
                 UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
                 self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
                 # self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
             else:
-                print("3 ", Primitive_, self.GetTopParent(Primitive_))
+                # print("3 ", Primitive_, self.GetTopParent(Primitive_))
                 UsdShade.MaterialBindingAPI(Primitive_).Bind(material)
                 self.usdStage.SetDefaultPrim(self.GetTopParent(Primitive_))
     
@@ -232,6 +258,10 @@ class USDHelper:
     def CreateNewMaterial(self, NewMaterialPath, ShaderName):
 
         # Texturing
+        print("NewMaterialPath | " , NewMaterialPath)
+        print("NewMaterialPath stReader' | " , NewMaterialPath+'/stReader')
+        print("ShaderName | " , ShaderName)
+        print("ShaderName | " , ShaderName)
         self.stReader = UsdShade.Shader.Define(self.usdStage, NewMaterialPath+'/stReader')
         self.stReader.CreateIdAttr('UsdPrimvarReader_float2')
 

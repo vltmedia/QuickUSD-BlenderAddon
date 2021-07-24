@@ -32,6 +32,22 @@ class QuickUSDProperties(PropertyGroup):
         description="Merge all the selected objects'.usda into a single .usda importing them as references.",
         default = True
         )
+    bool_CenterObject: BoolProperty(
+        name="Center Object",
+        description="Do you want to Center the Object to 0,0,0? If Snap to Floor is off, Origin will be placed at the center of the object.",
+        default = True
+        )
+
+    bool_SnapToFloor: BoolProperty(
+        name="Snap To Floor",
+        description="Do you want to Snap the object to the floor when centered? Only works if Center Object is checked.",
+        default = True
+        )
+    bool_ExportHierarchy: BoolProperty(
+        name="Export Parents & Children",
+        description="Export Full Hierarchy, including Parents & Children",
+        default = True
+        )
 
     # my_int: IntProperty(
     #     name = "Int Value",

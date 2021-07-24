@@ -149,6 +149,20 @@ class QUSD_ApplyMaterial:
         self.ApplyMaterialSlots(True)
         
         
+    def FindMeshInScene(self):
+        # def FindMeshInScene():
+        pathss = [x for x in self.usdHelper.usdStage.Traverse()]
+        chosenpath = ""
+        for pathh in pathss:
+            if "mesh_0" in pathh.GetPath().pathString:
+                return pathh
+                # gg = GetUSDParent()
+                # gg.GetParentAtTop(pathh)
+                # p = gg.TopParent
+                # print(p)
+                # print(pathh.GetPath().pathString)
+                # return pathh
+                    
 
             
     def ApplyMaterialSlots(self, ApplyToObject):
@@ -156,8 +170,13 @@ class QUSD_ApplyMaterial:
             materialslott = mat
             self.materialslott = mat
             print("Material Slot :", materialslott)
+            print("MaterialPath  ||  -- ",self.materialslott["MaterialPath"].replace(".", "_"))
+            
             # self.usdHelper.CreateNewMaterial(materialslott["MaterialPath"],materialslott["ShaderPath"])
-            self.CreateMaterial(self.materialslott["MaterialPath"],self.materialslott["ShaderPath"])
+            self.CreateMaterial(self.materialslott["MaterialPath"].replace(".", "_"),self.materialslott["ShaderPath"].replace(".", "_"))
+            
+            print("self.FindMeshInScene()  ||  -- ",self.FindMeshInScene())
+            # self.CreateMaterial(self.FindMeshInScene(),self.materialslott["ShaderPath"])
             # Apply Textures
             self.ApplyPBRTextures()
             if ApplyToObject:
